@@ -1,0 +1,81 @@
+<html lang="en">
+
+<head>
+    <script>
+        window.dataLayer = window.dataLayer || [];
+
+        function gtag() {
+            dataLayer.push(arguments);
+        }
+        gtag('js', new Date());
+        gtag('config', 'UA-160631403-3');
+    </script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#e1306c" />
+    <link href="https://fonts.googleapis.com/css2?family=Raleway:wght@300;400;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/static/css/style.css" />
+    <meta name="description" content="Download instagram images/videos for free with no Ads" />
+    <title>IG Download</title>
+</head>
+
+<body>
+    <header class="header">
+        <h1 class="heading">IG Download</h1>
+        <h2 class="sub-heading">
+            Download instagram images/videos
+        </h2>
+        <div>
+            <form action="/" method="post">
+                {% csrf_token %}
+                <center>
+                    <input type="text" name="url" class="input-url" placeholder="Paste the url here..." />
+                    <button class="submit-btn" type="submit">Download</button>
+                </center>
+            </form>
+        </div>
+    </header>
+    {% if media_data %}
+    <script>location.href = "#download"</script>
+    <section id="download">
+        <h1 style="font-size: 40px;">Download Media</h1>
+        <div class="flex-container">
+            {% for x in media_data.download_urls %}
+            <div>
+                <img src="{% url 'show_image' x %}" alt="x" class="image">
+                <br>
+                <a href="{{x}}" download="download.png">
+                    <button type="button" class="download-btn">Download</button>
+                </a>
+            </div>
+            {% endfor %}
+        </div>
+    </section>
+    {% endif %}
+    <div class="nothing">
+    </div>
+    <footer>
+        <p>Created with love by <a href="#" target="_blank">atulg</a>.</p>
+    </footer>
+    <script src="/static/js/index.js"></script>
+    <script>
+        function downloadImage(imageUrl, fileName) {
+            // Create an anchor element
+            var link = document.createElement('a');
+            link.href = imageUrl;
+            link.download = fileName || 'downloaded_image'; // Set the default downloaded file name if not provided
+
+            // Append the anchor element to the body
+            document.body.appendChild(link);
+
+            // Trigger a click event on the anchor element to start the download
+            link.click();
+
+            // Remove the anchor element from the body
+            document.body.removeChild(link);
+        }
+    </script>
+
+</body>
+
+</html>
