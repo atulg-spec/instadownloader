@@ -1,41 +1,35 @@
 from django.shortcuts import render
 from django.http import HttpResponse
 from .forms import media_data
-import json
 import requests
-from django.http import HttpResponse
+from django.http import HttpResponse,JsonResponse
 from urllib.request import urlopen
-from django.core.files.temp import NamedTemporaryFile
-from django.core.files import File
 from django.shortcuts import render
 
-def download_image(request, image_url):
-    try:
-        # Fetch the image from the URL
-        response = requests.get(image_url)
-        response.raise_for_status()
+def download_image(request):
+    if request.method == 'GET':
+        media_url = request.GET.get('url')
 
-        # Create a temporary file to store the image
-        img_temp = NamedTemporaryFile(delete=True)
-        img_temp.write(response.content)
-        img_temp.flush()
+        if not media_url:
+            return HttpResponse("Please provide a valid 'url' parameter in the query string.", status=400)
 
-        # Create a Django File object from the temporary file
-        image_file = File(img_temp)
+        try:
+            # Fetch the media file from the URL
+            response = requests.get(media_url, stream=True)
+            response.raise_for_status()
 
-        # Set the appropriate content type for the response
-        content_type = response.headers['Content-Type']
+            # Set the appropriate content type for the response
+            content_type = response.headers.get('content-type', 'application/octet-stream')
+            file_extension = content_type.split('/')[-1]
+            response_headers = {'Content-Type': content_type, 'Content-Disposition': f'attachment; filename=media.{file_extension}'}
 
-        # Create an HttpResponse with the image file and content type
-        response = HttpResponse(image_file.read(), content_type=content_type)
-        response['Content-Disposition'] = f'attachment; filename=image.jpg'
+            # Return the media content as the response
+            return HttpResponse(response.content, headers=response_headers)
 
-        return response
+        except requests.exceptions.RequestException as e:
+            return HttpResponse(f"Error fetching the media file: {e}", status=500)
 
-    except Exception as e:
-        # Handle any errors that may occur (e.g., invalid URL, network error)
-        return render(request, 'error_page.html', {'error_message': str(e)})
-
+    return HttpResponse("Invalid request method. Use the HTTP GET method.", status=405)
 
 
 # Create your views here.
@@ -47,22 +41,37 @@ def show_image(request, image_url):
     except Exception as e:
         return HttpResponse(f"Error: {str(e)}", status=404)
 
-
-
 def home(request):
     if request.method == 'POST':
         form = media_data(request.POST)
         if form.is_valid():
-            url = 'http://192.168.92.1:8000/api-v1/getdata'
-            data = {
-                'url':form.cleaned_data['url'],
-                'accesstoken':'5966f16e-cfbf-4a3d-8431-118c2ba32393'
-            }
-            data = json.dumps(data)
-            response = requests.post(url,data)
-            mdata = response.json()
+            mdata = []
+            try:
+                url = "https://instagram-media-downloader.p.rapidapi.com/rapid/post_v2.php"
+                posturl=form.cleaned_data['url']
+                querystring = {"url":posturl}
+                headers = {
+                	"X-RapidAPI-Key": "be20525d20mshb68d723e44569dfp143f7cjsnf80ed42d78b9",
+                	"X-RapidAPI-Host": "instagram-media-downloader.p.rapidapi.com"
+                }
+                response = requests.get(url, headers=headers, params=querystring)
+                jsonresponse = response.json()
+                print(jsonresponse)
+                if jsonresponse['items'][0]['media_type'] == 1:
+                    mdata.append(jsonresponse['items'][0]['image_versions2']['candidates'][0]['url']) #MEDIA TYPE 1
+                elif jsonresponse['items'][0]['media_type'] == 2:
+                    mdata.append(jsonresponse['items'][0]['video_versions'][0]['url']) #MEDIA TYPE 2
+                elif jsonresponse['items'][0]['media_type'] == 8:
+                # MEDIA TYPE 8
+                    for x in jsonresponse['items'][0]['carousel_media']:
+                        print('-=-=-=-=-=-=-=-=-=x-=-=-=-=-=')
+                        mdata.append(x['image_versions2']['candidates'][0]['url'])
+                print(mdata)
+            except Exception as e:
+                print(f'Error: {e}')
             context = {
-                'media_data':mdata,
+                'mdata':mdata
             }
             return render(request,'index.html',context)
     return render(request,'index.html')
+

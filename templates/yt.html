@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>YouTube Downloader</title>
+</head>
+
+<body>
+    <h1>YouTube Downloader</h1>
+    <form method="post">
+        {% csrf_token %}
+        <input type="text" name="video_url" placeholder="Enter YouTube Video URL" required>
+        <button type="submit">Fetch Video</button>
+    </form>
+    {% if error_message %}
+    <p>{{ error_message }}</p>
+    {% endif %}
+    {% if video_info %}
+    <h2>{{ video_info.title }}</h2>
+    {% for stream in video_info.streams %}
+    <video src="{{ stream.url }}" controls></video>
+    <li>{{ stream.resolution }} - <a href="{{ stream.url }}" download>Download</a></li>
+    {% endfor %}
+    {% endif %}
+</body>
+
+</html>

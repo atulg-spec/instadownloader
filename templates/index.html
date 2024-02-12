@@ -35,22 +35,31 @@
             </form>
         </div>
     </header>
-    {% if media_data %}
+    {% if mdata %}
     <script>location.href = "#download"</script>
     <section id="download">
         <h1 style="font-size: 40px;">Download Media</h1>
         <div class="flex-container">
-            {% for x in media_data.download_urls %}
+            {% for x in mdata %}
             <div>
-                <img src="{% url 'show_image' x %}" alt="x" class="image">
+                <img src="{% url 'show_image' x %}" onerror="removeImage(this)" alt="x" class="image">
+                <video src="{{x}}" onerror="removeImage(this)" class="video" controls></video>
                 <br>
-                <a href="{{x}}" download="download.png">
-                    <button type="button" class="download-btn">Download</button>
-                </a>
+                <form action="/download_image" method="get">
+                    <input type="hidden" name="url" value="{{x}}">
+                    <button type="submit" class="download-btn">Download</button>
+                </form>
+                <br>
             </div>
             {% endfor %}
         </div>
     </section>
+    {% else %}
+    {% if request.method == 'POST' %}
+    <h2 class="sub-heading" style="margin-top: 10%; color: red;">
+        Invalid Url
+    </h2>
+    {% endif %}
     {% endif %}
     <div class="nothing">
     </div>
@@ -59,20 +68,8 @@
     </footer>
     <script src="/static/js/index.js"></script>
     <script>
-        function downloadImage(imageUrl, fileName) {
-            // Create an anchor element
-            var link = document.createElement('a');
-            link.href = imageUrl;
-            link.download = fileName || 'downloaded_image'; // Set the default downloaded file name if not provided
-
-            // Append the anchor element to the body
-            document.body.appendChild(link);
-
-            // Trigger a click event on the anchor element to start the download
-            link.click();
-
-            // Remove the anchor element from the body
-            document.body.removeChild(link);
+        function removeImage(img) {
+            img.remove();
         }
     </script>
 
